@@ -1,4 +1,5 @@
 const qs = require("querystring");
+const fs = require("fs");
 
 const saveUser = user => {
   // получить файл с юзером
@@ -8,19 +9,28 @@ const saveUser = user => {
 
 const signupRoute = (request, response) => {
   // Взять данные что пришли
-
   if (request.method === "POST") {
     let body = "";
-
+    let username = "";
     request.on("data", function(data) {
       body = body + data;
+      username = JSON.parse(body).username;
 
-      console.log("Incoming data!!!!", JSON.parse(body).username);
+      fs.writeFile(`src/db/users/${username}.json`, `${body}`, function(err) {
+        if (err) return console.log("Not created", err);
+        console.log("File is created successfully.");
+
+        const userData = require(`../../db/users/${username}.json`);
+
+        response.writeHead(200, { "Content-type": "text/html" }),
+          response.write(JSON.stringify({ status: "success", user: userData }));
+        response.end();
+      });
     });
 
     request.on("end", function() {
       const post = qs.parse(body);
-      console.log("data", post);
+      // console.log("data", post);
     });
   }
 
